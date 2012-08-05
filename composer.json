@@ -2,16 +2,16 @@
     "name": "tkoomzaaskz/VisualFactory",
     "version": "1.0.0-BETA",
     "description": "Image transforming operations using GD and Imagick libraries",
-    "keywords": ["image", "gd", "imagick"],
+    "keywords": ["image","gd","imagick"],
     "homepage": "https://github.com/tkoomzaaskz/VisualFactory.git",
     "license": "MIT",
     "authors": [
         {
             "name": "Tomasz Ducin",
             "email": "tomasz.ducin@gmail.com"
-        },
+        }
     ],
     "require": {
-        "php": ">=5.0",
-    },
+        "php": ">=5.0"
+    }
 }
