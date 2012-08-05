@@ -1,5 +1,5 @@
 {
-    "name": "tkoomzaaskz/VisualFactory",
+    "name": "tkoomzaaskz/visual-factory",
     "version": "1.0.0-BETA",
     "description": "Image transforming operations using GD and Imagick libraries",
     "keywords": ["image","gd","imagick"],
