@@ -1,17 +1,17 @@
 <?php
 
 /**
- * Visual Factory
+ * Visual Factory Manager
  *
  * Class performing basic image transforming operations using GD and Imagick
  * libraries.
  *
- * (!) Image Magick doesn't support automatic orientation switching (600x400 -> 400x600)
+ * (!) Image Magick doesn't support automatic orientation flipping (600x400 -> 400x600)
  *
  * @package    VisualFactory
  * @author     Tomasz Ducin <tomasz.ducin@gmail.com>
  */
-class VisualFactory
+class VFManager
 {
   /**
    * Reads image from the filepath given by the parameter using gd built-in
@@ -112,23 +112,22 @@ class VisualFactory
   *
   * @param String $in_file - input file path
   * @param String $out_file - output file path
-  * @param String $format - output file format, e. g. '800x600'
-  * @param Boolean $switch - if the format shall be automatically switched
+  * @param VFFormat $format - output file format, e.g. '800x600'
   */
-  protected static function GDResize($in_file, $out_file, $format, $switch)
+  protected static function GDResize($in_file, $out_file, VFFormat $format)
   {
     $source = self::imageCreateFrom($in_file);
 
     $src_width = imagesx($source);
     $src_height = imagesy($source);
 
-    $f = explode('x', $format);
-    if ($src_width > $src_height || !$switch) {
-      $new_width = $f[0];
-      $new_height = $f[1];
+    $flip = $format->getFlip();
+    if ($src_width > $src_height || !$flip) {
+      $new_width = $format->getWidth();
+      $new_height = $format->getHeight();
     } else {
-      $new_width = $f[1];
-      $new_height = $f[0];
+      $new_width = $format->getHeight();
+      $new_height = $format->getWidth();
     }
 
     $destination = imagecreatetruecolor($new_width, $new_height);
@@ -155,11 +154,11 @@ class VisualFactory
     }
 
     imagecopyresampled(
-      $destination, $source,
+      $destination, $source, // destination and source binary images
       0, 0, // odkąd smarować na wyniku
       $fin_x, $fin_y, // skąd pobierać źródło
-      $new_width, $new_height,
-      $fin_width, $fin_height
+      $new_width, $new_height, // destination image dimensions
+      $fin_width, $fin_height // source image dimensions
     );
 
     self::imagePut($destination, $out_file);
@@ -207,14 +206,15 @@ class VisualFactory
   *
   * @param String $in_file - input file path
   * @param String $out_file - output file path
-  * @param String $format - output file format, e. g. '800x600'
+  * @param VFFormat $format - output file format, e.g. '800x600'
   */
-  protected static function ImageMagickResize($in_file, $out_file, $format)
+  protected static function ImageMagickResize($in_file, $out_file, VFFormat $format)
   {
+    $f_str = $format->getFormatString();
     $command_convert =
       "convert ".
       escapeshellarg($in_file).
-      " -thumbnail $format -gravity center -extent $format -strip ".
+      " -thumbnail {$f_str} -gravity center -extent {$f_str} -strip ".
       escapeshellarg($out_file);
 
     shell_exec($command_convert);
@@ -251,10 +251,9 @@ class VisualFactory
   * @param String $mode - external library mode - either 'gd' or 'im'
   * @param String $in_file - input file path
   * @param String $out_file - output file path
-  * @param String $format - output file format, e. g. '800x600'
-  * @param Boolean $switch - if the format shall be automatically switched
+  * @param VFFormat $format - output file format, e.g. '800x600'
   */
-  public static function Resize($mode, $in_file, $out_file, $format, $switch = true)
+  public static function Resize($mode, $in_file, $out_file, VFFormat $format)
   {
     switch($mode)
     {
@@ -262,7 +261,7 @@ class VisualFactory
         self::ImageMagickResize($in_file, $out_file, $format);
         break;
       case 'gd':
-        self::GDResize($in_file, $out_file, $format, $switch);
+        self::GDResize($in_file, $out_file, $format);
         break;
     }
   }
@@ -273,13 +272,13 @@ class VisualFactory
   * 'im').
   *
   * @param String $mode - external library mode - either 'gd' or 'im'
-  * @param String $wm_file - watermark file path
   * @param String $in_file - input file path
   * @param String $mid_file - auxiliary file path (created after resize andused to put a watermark on)
   * @param String $out_file - output file path
-  * @param String $format - output file format, e. g. '800x600'
+  * @param VFFormat $format - output file format, e.g. '800x600'
+  * @param String $wm_file - watermark file path
   */
-  public static function Watermark($mode, $in_file, $mid_file, $out_file, $format, $wm_file, $switch = true)
+  public static function Watermark($mode, $in_file, $mid_file, $out_file, VFFormat $format, $wm_file)
   {
     switch($mode)
     {
@@ -288,7 +287,7 @@ class VisualFactory
         self::ImageMagickWatermark($mid_file, $out_file, $wm_file);
         break;
       case 'gd':
-        self::GDResize($in_file, $mid_file, $format, $switch);
+        self::GDResize($in_file, $mid_file, $format);
         self::GDWatermark($mid_file, $out_file, $wm_file);
         break;
     }
